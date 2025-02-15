@@ -80,7 +80,8 @@ extern int yydebug;
     LBRACKET = 281,                /* LBRACKET  */
     RBRACKET = 282,                /* RBRACKET  */
     LPAREN = 283,                  /* LPAREN  */
-    RPAREN = 284                   /* RPAREN  */
+    RPAREN = 284,                  /* RPAREN  */
+    UMINUS = 285                   /* UMINUS  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -95,7 +96,7 @@ union YYSTYPE
     char *string;
     ASTNode *node;
 
-#line 99 "parser.tab.h"
+#line 100 "parser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

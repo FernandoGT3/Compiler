@@ -21,12 +21,23 @@ ASTNode *root = NULL;
     ASTNode *node;
 }
 
+%expect 1 // Conflito esperado (dangling else)
+
+// Tokens
 %token <string> ID
 %token <num> NUM
 
 %token ELSE IF INT RETURN VOID WHILE
 %token ADD SUB MUL DIV LE LT GE GT EQ NE
 %token ATTR SEMI COMMA LBRACE RBRACE LBRACKET RBRACKET LPAREN RPAREN
+
+// Precedência (da menor para a maior)
+%right ATTR          // Atribuição (=)
+%left EQ NE          // ==, !=
+%left LT LE GT GE    // <, <=, >, >=
+%left ADD SUB        // +, -
+%left MUL DIV        // *, /
+%right UMINUS        // Operador unário -
 
 %type <node> program declaration_list declaration var_declaration
 %type <node> type_specifier fun_declaration params param_list param
