@@ -1,9 +1,12 @@
 %{
-#include <stdio.h>
-#include <stdlib.h>
+#include "types.h"
 #include "ast.h"
 #include "symtab.h"
 #include "errors.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
 
 extern int line_num;
 extern int yylex();
@@ -15,20 +18,26 @@ ASTNode *root = NULL;
 
 %}
 
+%code requires {
+    #include "ast.h"  // Ensures ASTNode is available in generated headers
+}
+
 %union {
+    int op;
     int num;
     char *string;
     ASTNode *node;
 }
+
 
 %expect 1 // Conflito esperado (dangling else)
 
 // Tokens
 %token <string> ID
 %token <num> NUM
+%token <op> LE LT GT GE EQ NE ADD SUB MUL DIV
 
 %token ELSE IF INT RETURN VOID WHILE
-%token ADD SUB MUL DIV LE LT GE GT EQ NE
 %token ATTR SEMI COMMA LBRACE RBRACE LBRACKET RBRACKET LPAREN RPAREN
 
 // Precedência (da menor para a maior)
@@ -43,8 +52,9 @@ ASTNode *root = NULL;
 %type <node> type_specifier fun_declaration params param_list param
 %type <node> compound_decl local_declarations statement_list statement
 %type <node> expression_decl selection_decl iteration_decl return_decl
-%type <node> expression var simple_expression relop additive_expression
+%type <node> var simple_expression relop additive_expression
 %type <node> sum term mult factor activation args arg_list
+%type <node> expression
 
 %start program
 
@@ -77,10 +87,10 @@ declaration:
 
 var_declaration:
     type_specifier ID SEMI {
-        $$ = ast_new_var_decl($1, $2, NULL);
+        $$ = ast_new_var_decl($1->type, $2, NULL);
     }
 |   type_specifier ID LBRACKET NUM RBRACKET SEMI {
-        $$ = ast_new_var_decl($1, $2, ast_new_num($4));
+        $$ = ast_new_var_decl($1->type, $2, ast_new_num($4));
     }
 ;
 
@@ -95,7 +105,7 @@ type_specifier:
 
 fun_declaration:
     type_specifier ID LPAREN params RPAREN compound_decl {
-        $$ = ast_new_fun_decl($1, $2, $4, $6);
+        $$ = ast_new_fun_decl($1->type, $2, $4, $6);
     }
 ;
 
@@ -119,10 +129,10 @@ param_list:
 
 param:
     type_specifier ID {
-        $$ = ast_new_param($1, $2, 0);
+        $$ = ast_new_param($1->type, $2, 0);
     }
 |   type_specifier ID LBRACKET RBRACKET {
-        $$ = ast_new_param($1, $2, 1);
+        $$ = ast_new_param($1->type, $2, 1);
     }
 ;
 
@@ -221,7 +231,7 @@ var:
 
 simple_expression:
     additive_expression relop additive_expression {
-        $$ = ast_new_binop($2, $1, $3);
+        $$ = ast_new_binop((uintptr_t)$2, $1, $3);
     }
 |   additive_expression {
         $$ = $1;
@@ -229,17 +239,17 @@ simple_expression:
 ;
 
 relop:
-    LE { $$ = LE; }
-|   LT { $$ = LT; }
-|   GT { $$ = GT; }
-|   GE { $$ = GE; }
-|   EQ { $$ = EQ; }
-|   NE { $$ = NE; }
+    LE { $$ = (ASTNode*) (int) LE; }
+|   LT { $$ = (ASTNode*) (int) LT; }
+|   GT { $$ = (ASTNode*) (int) GT; }
+|   GE { $$ = (ASTNode*) (int) GE; }
+|   EQ { $$ = (ASTNode*) (int) EQ; }
+|   NE { $$ = (ASTNode*) (int) NE; }
 ;
 
 additive_expression:
     additive_expression sum term {
-        $$ = ast_new_binop($2, $1, $3);
+        $$ = ast_new_binop((uintptr_t)$2, $1, $3);
     }
 |   term {
         $$ = $1;
@@ -247,13 +257,13 @@ additive_expression:
 ;
 
 sum:
-    ADD { $$ = ADD; }
-|   SUB { $$ = SUB; }
+    ADD { $$ = (ASTNode*) (int) ADD; }
+|   SUB { $$ = (ASTNode*) (int) SUB; }
 ;
 
 term:
     term mult factor {
-        $$ = ast_new_binop($2, $1, $3);
+        $$ = ast_new_binop((uintptr_t)$2, $1, $3);
     }
 |   factor {
         $$ = $1;
@@ -261,8 +271,8 @@ term:
 ;
 
 mult:
-    MUL { $$ = MUL; }
-|   DIV { $$ = DIV; }
+    MUL { $$ = (ASTNode*) (int) MUL; }
+|   DIV { $$ = (ASTNode*) (int) DIV; }
 ;
 
 factor:
@@ -311,6 +321,7 @@ void yyerror(const char *s) {
     exit(1);
 }
 
+/*
 int main(int argc, char *argv[]) {
     if (argc < 2) {
         fprintf(stderr, "Uso: %s <arquivo>\n", argv[0]);
@@ -331,3 +342,4 @@ int main(int argc, char *argv[]) {
     fclose(yyin);
     return 0;
 }
+*/

@@ -1,6 +1,6 @@
 %{
 #include <stdio.h>
-#include "parser.tab.h"  // Arquivo gerado pelo Bison
+#include "parser.tab.h" // Arquivo gerado pelo Bison
 #include "errors.h"
 
 int line_num = 1;        // Contador de linhas para erros

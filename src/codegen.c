@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "codegen.h"
+#include "symtab.h"
 
 static int temp_counter = 0;
 static int label_counter = 0;
@@ -42,7 +43,7 @@ TAC* generate_code(ASTNode *node) {
     
     switch(node->type) {
         case NODE_PROGRAM:
-            return generate_code(node->program_decls);
+            return generate_code(node->program.declarations);
             
         case NODE_FUN_DECL: {
             TAC *code = NULL;
@@ -50,11 +51,11 @@ TAC* generate_code(ASTNode *node) {
             // Prologo da função
             TAC *prolog = malloc(sizeof(TAC));
             sprintf(prolog->op, "FUNC");
-            sprintf(prolog->result, "%s", node->fun_name);
+            sprintf(prolog->result, "%s", node->fun_decl.fun_name);
             code = tac_append(code, prolog);
             
             // Gerar código para o corpo
-            code = tac_append(code, generate_code(node->fun_body));
+            code = tac_append(code, generate_code(node->fun_decl.body));
             
             // Epilogo
             TAC *epilog = malloc(sizeof(TAC));
@@ -70,19 +71,19 @@ TAC* generate_code(ASTNode *node) {
         case NODE_BINOP:
             return gen_binop(node);
             
-        case NODE_IF:
+        case NODE_IF_STMT:
             return gen_if(node);
             
-        case NODE_WHILE:
+        case NODE_WHILE_STMT:
             return gen_while(node);
             
         case NODE_FUN_CALL:
             return gen_function_call(node);
             
-        case NODE_RETURN: {
+        case NODE_RETURN_STMT: {
             TAC *code = NULL;
-            if(node->return_expr) {
-                TAC *expr_code = gen_expression(node->return_expr);
+            if(node->return_stmt.return_expr) {
+                TAC *expr_code = gen_expression(node->return_stmt.return_expr);
                 code = tac_append(code, expr_code);
                 
                 TAC *ret = malloc(sizeof(TAC));
@@ -112,7 +113,7 @@ static TAC* gen_expression(ASTNode *expr) {
             TAC *t = malloc(sizeof(TAC));
             char *temp = new_temp();
             sprintf(t->op, "=");
-            sprintf(t->arg1, "%d", expr->num_value);
+            sprintf(t->arg1, "%d", expr->num.value);
             strcpy(t->result, temp);
             return t;
         }
@@ -121,7 +122,7 @@ static TAC* gen_expression(ASTNode *expr) {
             TAC *t = malloc(sizeof(TAC));
             char *temp = new_temp();
             sprintf(t->op, "=");
-            strcpy(t->arg1, expr->var_name);
+            strcpy(t->arg1, expr->var.var_name);
             strcpy(t->result, temp);
             return t;
         }
@@ -138,49 +139,42 @@ static TAC* gen_expression(ASTNode *expr) {
 }
 
 static TAC* gen_assignment(ASTNode *assign) {
-    TAC *code = gen_expression(assign->assign_rhs);
+    TAC *code = gen_expression(assign->assign.rhs);
     
     TAC *assign_tac = malloc(sizeof(TAC));
     sprintf(assign_tac->op, "=");
     strcpy(assign_tac->arg1, code ? code->result : "");
-    strcpy(assign_tac->result, assign->assign_lhs->var_name);
+    strcpy(assign_tac->result, assign->assign.lhs->var.var_name);
     
     return tac_append(code, assign_tac);
 }
 
 static TAC* gen_binop(ASTNode *binop) {
-    TAC *left = gen_expression(binop->binop_left);
-    TAC *right = gen_expression(binop->binop_right);
+    TAC *left = gen_expression(binop->binop.left);
+    TAC *right = gen_expression(binop->binop.right);
     
     TAC *code = tac_append(left, right);
     
     TAC *op_tac = malloc(sizeof(TAC));
     char *temp = new_temp();
     
-    switch(binop->binop_op) {
-        case ADD: strcpy(op_tac->op, "+"); break;
-        case SUB: strcpy(op_tac->op, "-"); break;
-        case MUL: strcpy(op_tac->op, "*"); break;
-        case DIV: strcpy(op_tac->op, "/"); break;
+    switch(binop->binop.op) {
+        case OP_ADD: strcpy(op_tac->op, "+"); break;
+        case OP_SUB: strcpy(op_tac->op, "-"); break;
+        case OP_MUL: strcpy(op_tac->op, "*"); break;
+        case OP_DIV: strcpy(op_tac->op, "/"); break;
         
         // Operadores relacionais
-        case LT: strcpy(op_tac->op, "<"); break;
-        case LE: strcpy(op_tac->op, "<="); break;
-        case GT: strcpy(op_tac->op, ">"); break;
-        case GE: strcpy(op_tac->op, ">="); break;
-        case EQ: strcpy(op_tac->op, "=="); break;
-        case NE: strcpy(op_tac->op, "!="); break;
+        case OP_LT: strcpy(op_tac->op, "<"); break;
+        case OP_LE: strcpy(op_tac->op, "<="); break;
+        case OP_GT: strcpy(op_tac->op, ">"); break;
+        case OP_GE: strcpy(op_tac->op, ">="); break;
+        case OP_EQ: strcpy(op_tac->op, "=="); break;
+        case OP_NE: strcpy(op_tac->op, "!="); break;
 
         // Operadores lógicos
-        case AND: strcpy(op_tac->op, "&&"); break;
-        case OR: strcpy(op_tac->op, "||"); break;
-
-        // Operadores de atribuição
-        case ASSIGN: strcpy(op_tac->op, "="); break;
-        case ADD_ASSIGN: strcpy(op_tac->op, "+="); break;
-        case SUB_ASSIGN: strcpy(op_tac->op, "-="); break;
-        case MUL_ASSIGN: strcpy(op_tac->op, "*="); break;
-        case DIV_ASSIGN: strcpy(op_tac->op, "/="); break;
+        case OP_AND: strcpy(op_tac->op, "&&"); break;
+        case OP_OR: strcpy(op_tac->op, "||"); break;
 
         default:
             fprintf(stderr, "ERRO: Operador binário desconhecido\n");
@@ -198,7 +192,7 @@ static TAC* gen_if(ASTNode *if_stmt) {
     char *else_label = new_label();
     char *end_label = new_label();
     
-    TAC *cond_code = gen_expression(if_stmt->cond_expr);
+    TAC *cond_code = gen_expression(if_stmt->if_stmt.condition);
     TAC *code = cond_code;
     
     // Ifz (condição) goto ELSE
@@ -209,7 +203,7 @@ static TAC* gen_if(ASTNode *if_stmt) {
     code = tac_append(code, branch);
     
     // Código THEN
-    TAC *then_code = generate_code(if_stmt->then_stmt);
+    TAC *then_code = generate_code(if_stmt->if_stmt.then_stmt);
     code = tac_append(code, then_code);
     
     // Goto END
@@ -225,8 +219,8 @@ static TAC* gen_if(ASTNode *if_stmt) {
     code = tac_append(code, else_lbl);
     
     // Código ELSE (se existir)
-    if(if_stmt->else_stmt) {
-        TAC *else_code = generate_code(if_stmt->else_stmt);
+    if(if_stmt->if_stmt.else_stmt) {
+        TAC *else_code = generate_code(if_stmt->if_stmt.else_stmt);
         code = tac_append(code, else_code);
     }
     
@@ -252,7 +246,7 @@ static TAC* gen_while(ASTNode *while_stmt) {
     code = tac_append(code, loop_lbl);
     
     // Condição
-    TAC *cond_code = gen_expression(while_stmt->cond_expr);
+    TAC *cond_code = gen_expression(while_stmt->while_stmt.condition);
     code = tac_append(code, cond_code);
     
     // Ifz (condição) goto END
@@ -263,7 +257,7 @@ static TAC* gen_while(ASTNode *while_stmt) {
     code = tac_append(code, branch);
     
     // Corpo do loop
-    TAC *body_code = generate_code(while_stmt->loop_body);
+    TAC *body_code = generate_code(while_stmt->while_stmt.body);
     code = tac_append(code, body_code);
     
     // Goto LOOP
@@ -283,7 +277,7 @@ static TAC* gen_while(ASTNode *while_stmt) {
 
 static TAC* gen_function_call(ASTNode *call) {
     TAC *code = NULL;
-    ASTNode *arg = call->fun_call_args;
+    ASTNode *arg = call->fun_call.args;
     int arg_count = 0;
     
     // Gerar código para argumentos
@@ -304,12 +298,15 @@ static TAC* gen_function_call(ASTNode *call) {
     // Chamada da função
     TAC *call_tac = malloc(sizeof(TAC));
     sprintf(call_tac->op, "CALL");
-    strcpy(call_tac->arg1, call->fun_call_name);
+    strcpy(call_tac->arg1, call->fun_call.fun_name);
     sprintf(call_tac->arg2, "%d", arg_count);
-    if(call->expr_type != VOID_TYPE) {
+
+    Symbol *fun_sym = lookup_symbol(call->fun_call.fun_name, "global");
+    if(fun_sym && fun_sym->type != VOID_TYPE) {
         char *temp = new_temp();
         strcpy(call_tac->result, temp);
     }
+    
     code = tac_append(code, call_tac);
     
     return code;

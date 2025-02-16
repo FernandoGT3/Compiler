@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "symtab.h"
+#include "types.h"
 
 Scope *current_scope = NULL;
 
@@ -46,7 +47,7 @@ Symbol* lookup_symbol(const char *name, const char *scope) {
     return NULL;
 }
 
-void insert_symbol(const char *name, TypeKind type, int is_array, const char *scope, int line) {
+void insert_symbol(const char *name, DataType type, int is_array, const char *scope, int line) {
     // Verifica se já existe no escopo atual
     Symbol *s = current_scope->symbols;
     while(s != NULL) {
