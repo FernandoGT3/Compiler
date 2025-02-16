@@ -39,7 +39,7 @@
 # define YY_YY_BUILD_PARSER_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+# define YYDEBUG 1
 #endif
 #if YYDEBUG
 extern int yydebug;
@@ -47,7 +47,7 @@ extern int yydebug;
 /* "%code requires" blocks.  */
 #line 21 "src/parser.y"
 
-    #include "ast.h"  // Ensures ASTNode is available in generated headers
+    #include "../include/ast.h"  // Ensures ASTNode is available in generated headers
 
 #line 53 "build/parser.tab.h"
 

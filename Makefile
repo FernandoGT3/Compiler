@@ -2,7 +2,7 @@
 CC = gcc
 FLEX = flex
 BISON = bison
-CFLAGS = -g -Wall -Isrc/
+CFLAGS = -g -Wall -Isrc/ -Iinclude/
 SRC_DIR = src/
 BUILD_DIR = build/
 
@@ -16,7 +16,7 @@ OBJ = $(patsubst $(SRC_DIR)%.c,$(BUILD_DIR)%.o,$(SRC_C)) \
       $(BUILD_DIR)lex.yy.o
 
 # Regra padrão
-all: $(BUILD_DIR) $(TARGET)
+all: $(BUILD_DIR) $(BUILD_DIR)parser.tab.h $(BUILD_DIR)lex.yy.c $(TARGET)
 
 # Cria diretório de build
 $(BUILD_DIR):
@@ -26,20 +26,20 @@ $(BUILD_DIR):
 $(TARGET): $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ -lfl
 
-# Geração do parser
+# Geração do parser (Bison)
 $(BUILD_DIR)parser.tab.c $(BUILD_DIR)parser.tab.h: $(SRC_DIR)parser.y | $(BUILD_DIR)
-	$(BISON) -d -o $(BUILD_DIR)parser.tab.c $<
+	$(BISON) -d -t -v -o $(BUILD_DIR)parser.tab.c $<
 
-# Geração do lexer
+# Geração do lexer (Flex)
 $(BUILD_DIR)lex.yy.c: $(SRC_DIR)lexer.l $(BUILD_DIR)parser.tab.h | $(BUILD_DIR)
 	$(FLEX) -o $@ $<
 
-# Regra para arquivos objeto gerados
+# Regra para arquivos objeto gerados a partir do build/
 $(BUILD_DIR)%.o: $(BUILD_DIR)%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-# Regra para arquivos fonte normais
-$(BUILD_DIR)%.o: $(SRC_DIR)%.c | $(BUILD_DIR)
+# Regra para arquivos fonte normais (dependendo do parser)
+$(BUILD_DIR)%.o: $(SRC_DIR)%.c $(BUILD_DIR)parser.tab.h | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 # Dependências especiais

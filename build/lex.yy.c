@@ -483,8 +483,8 @@ char *yytext;
 #line 1 "src/lexer.l"
 #line 2 "src/lexer.l"
 #include <stdio.h>
-#include "parser.tab.h" // Arquivo gerado pelo Bison
-#include "errors.h"
+#include "../build/parser.tab.h" // Arquivo gerado pelo Bison
+#include "../include/errors.h"
 
 int line_num = 1;        // Contador de linhas para erros
 #line 491 "build/lex.yy.c"

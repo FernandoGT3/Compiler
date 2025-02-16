@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "semant.h"
-#include "types.h"
+#include "../include/semant.h"
+#include "../include/types.h"
 
 static const char *current_function = NULL;
 
@@ -207,10 +207,10 @@ void check_semantics(ASTNode *root) {
     init_symbol_table();
     ASTNode *decl = root->program.declarations;
     
-    // Primeira passada: Declarações Globais
+    // Primeira passada: Insere Declarações Globais
     while(decl != NULL) {
         if(decl->type == NODE_FUN_DECL) {
-            // Insere função na tabela e guarda referência ao nó
+            // Insere função com escopo GLOBAL
             insert_symbol(decl->fun_decl.fun_name, 
                         decl->fun_decl.return_type, 
                         0,  // Não é array
@@ -235,9 +235,14 @@ void check_semantics(ASTNode *root) {
         decl = decl->next;
     }
     
-    // Verificação da Função Main
-    if(!lookup_symbol("main", "global")) {
-        fprintf(stderr, "ERRO SEMÂNTICO: função 'main' não declarada\n");
+    // Verificação EXPLÍCITA da main no escopo global
+    Symbol *main_sym = lookup_symbol("main", "global");
+    if(!main_sym) {
+        fprintf(stderr, "ERRO SEMÂNTICO: Função 'main' não declarada\n");
+        exit(1);
+    }
+    if(main_sym->type != INT_TYPE) {
+        fprintf(stderr, "ERRO SEMÂNTICO: Função 'main' deve retornar int\n");
         exit(1);
     }
 }

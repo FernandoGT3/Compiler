@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "codegen.h"
-#include "symtab.h"
+#include "../include/codegen.h"
+#include "../include/symtab.h"
 
 static int temp_counter = 0;
 static int label_counter = 0;

@@ -1,4 +1,4 @@
-#include "ast.h"
+#include "../include/ast.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,7 +36,7 @@ ASTNode* ast_new_fun_decl(DataType return_type, char *name, ASTNode *params, AST
     node->type = NODE_FUN_DECL;
     node->line = 0;
     node->fun_decl.return_type = return_type;
-    node->fun_decl.fun_name = strdup(name);
+    node->fun_decl.fun_name = name ? strdup(name) : NULL;
     node->fun_decl.params = params;
     node->fun_decl.body = body;
     node->next = NULL;

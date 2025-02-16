@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "ast.h"
-#include "semant.h"
-#include "symtab.h"
-#include "codegen.h"
-#include "errors.h"
-#include "parser.tab.h"
+#include "../include/ast.h"
+#include "../include/semant.h"
+#include "../include/symtab.h"
+#include "../include/codegen.h"
+#include "../include/errors.h"
+#include "../build/parser.tab.h"
 
 extern FILE *yyin;
 extern int yyparse();

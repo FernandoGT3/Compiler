@@ -1,8 +1,8 @@
 %{
-#include "types.h"
-#include "ast.h"
-#include "symtab.h"
-#include "errors.h"
+#include "../include/types.h"
+#include "../include/ast.h"
+#include "../include/symtab.h"
+#include "../include/errors.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,7 +19,7 @@ ASTNode *root = NULL;
 %}
 
 %code requires {
-    #include "ast.h"  // Ensures ASTNode is available in generated headers
+    #include "../include/ast.h"  // Ensures ASTNode is available in generated headers
 }
 
 %union {
@@ -105,7 +105,7 @@ type_specifier:
 
 fun_declaration:
     type_specifier ID LPAREN params RPAREN compound_decl {
-        $$ = ast_new_fun_decl($1->type, $2, $4, $6);
+        $$ = ast_new_fun_decl($1->var_decl.var_type, $2, $4, $6);
     }
 ;
 

@@ -69,10 +69,10 @@
 /* First part of user prologue.  */
 #line 1 "src/parser.y"
 
-#include "types.h"
-#include "ast.h"
-#include "symtab.h"
-#include "errors.h"
+#include "../include/types.h"
+#include "../include/ast.h"
+#include "../include/symtab.h"
+#include "../include/errors.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1275,7 +1275,7 @@ yyreduce:
   case 11: /* fun_declaration: type_specifier ID LPAREN params RPAREN compound_decl  */
 #line 107 "src/parser.y"
                                                          {
-        (yyval.node) = ast_new_fun_decl((yyvsp[-5].node)->type, (yyvsp[-4].string), (yyvsp[-2].node), (yyvsp[0].node));
+        (yyval.node) = ast_new_fun_decl((yyvsp[-5].node)->var_decl.var_type, (yyvsp[-4].string), (yyvsp[-2].node), (yyvsp[0].node));
     }
 #line 1281 "build/parser.tab.c"
     break;
